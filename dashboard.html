@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Jekyll v3.8.5">
+    <title>BlackBox || Dashboard</title>
+
+    <!-- Bootstrap core CSS -->
+<link href="css/bootstrap.min.css" rel="stylesheet">
+
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+        .nav-item{
+            margin-left: 30px;
+        }
+        
+        body{
+            background-color:darkgray;
+        }
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="css/offcanvas.css" rel="stylesheet">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
+  <a class="navbar-brand mr-auto mr-lg-0" style="color:greenyellow">BlackBox</a>
+  <button class="navbar-toggler p-0 border-0" type="button" data-toggle="offcanvas">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="navbar-collapse offcanvas-collapse" id="navbarsExampleDefault">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="dashboard.html">Dashboard </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Notifications</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="about.html">About Us</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="index.html">Logout</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+
+<main role="main" class="container">
+  <div class="my-3 p-3 bg-white rounded shadow-sm">
+    <div id="map" style="height: 600px ; width: 100%;" class="col-md-12">
+            
+            //firebase
+        <script src="https://www.gstatic.com/firebasejs/5.10.0/firebase.js"></script>
+        <script src="js/jquery-3.4.0.min.js"></script>
+        <script>
+            //initialize firebase
+              var config = {
+                  apiKey: "AIzaSyA8321tBph_3LMdTCAKQWppaJSnNxnI5HQ",
+                  authDomain: "blackbox-243206.firebaseapp.com",
+                  databaseURL: "https://blackbox-243206.firebaseio.com",
+                  projectId: "blackbox-243206",
+                  storageBucket: "blackbox-243206.appspot.com",
+                  messagingSenderId: "720475383058",
+                  appId: "1:720475383058:web:6d3673ab698a9f8c"
+              };
+              firebase.initializeApp(config);
+            
+            // Google Map Initialization... 
+            function initMap() {
+                map = new google.maps.Map(document.getElementById('map'), {
+                    zoom: 8,
+                    center: new google.maps.LatLng(15.4909, 73.8278),
+                    mapTypeId: 'terrain'
+                });
+            }
+            </script>
+            
+            //map
+            <script>
+            var cars_count = 0;
+            // markers array to store all the markers, so that we could remove marker when any car goes offline and its data will be remove from realtime database...
+            var markers = [];
+            var map;
+// This Function will create a car icon with angle and add/display that marker on the map
+            function AddCar(data) {
+                var icon = { // car icon
+                    path: 'M29.395,0H17.636c-3.117,0-5.643,3.467-5.643,6.584v34.804c0,3.116,2.526,5.644,5.643,5.644h11.759   c3.116,0,5.644-2.527,5.644-5.644V6.584C35.037,3.467,32.511,0,29.395,0z M34.05,14.188v11.665l-2.729,0.351v-4.806L34.05,14.188z    M32.618,10.773c-1.016,3.9-2.219,8.51-2.219,8.51H16.631l-2.222-8.51C14.41,10.773,23.293,7.755,32.618,10.773z M15.741,21.713   v4.492l-2.73-0.349V14.502L15.741,21.713z M13.011,37.938V27.579l2.73,0.343v8.196L13.011,37.938z M14.568,40.882l2.218-3.336   h13.771l2.219,3.336H14.568z M31.321,35.805v-7.872l2.729-0.355v10.048L31.321,35.805',
+                    scale: 0.4,
+                    fillColor: "#50f442", //<-- Car Color, you can change it 
+                    fillOpacity: 1,
+                    strokeWeight: 1,
+                    anchor: new google.maps.Point(0, 5),
+                };
+                var uluru = { lat: data.val().lat, lng: data.val().lng, speed: data.val().speed };
+                var marker = new google.maps.Marker({
+                    position: uluru,
+                    icon: icon,
+                    map: map
+                });
+                markers[data.key] = marker; // add marker in the markers array...
+                document.getElementById("cars").innerHTML = cars_count;
+                document.getElementById("lat").innerHTML=uluru.lat;
+                document.getElementById("long").innerHTML=uluru.lng;
+                document.getElementById("speed").innerHTML=uluru.speed;
+                
+                //speed limit
+                var maxspeed=30;
+                var lat = +uluru.lat.toFixed(6); 
+                var lng = +uluru.lng.toFixed(6); 
+                if(lat>=15.422370&&lat<=15.425935&&lng>=73.979406&&lng<=73.979551&&speed>maxspeed)
+                {   //sending mail with ajax call to cloud function
+                    var dest=window.prompt("Speed limit exceeded. Enter user email ID to send challan");
+                    var http = new XMLHttpRequest();
+                    var url = 'https://us-central1-blackbox-243206.cloudfunctions.net/sendChallan?dest='+dest;
+                    console.log(url);
+                    http.open("GET",url);
+                    http.send();
+                    http.onreadystatechange=function(){
+                        if(this.readyState==4&& this.status==200)
+                            {
+                                window.alert(http.responseText);
+                            }
+                    }
+                }
+            }
+                
+            //events
+            // get firebase database reference...
+            var cars_Ref = firebase.database().ref('/');
+            // this event will be triggered when a new object will be added in the database...
+            cars_Ref.on('child_added', function (data) {
+                cars_count++;
+                AddCar(data);
+            });
+            // this event will be triggered on location change of any car...
+            cars_Ref.on('child_changed', function (data) {
+                markers[data.key].setMap(null);
+                AddCar(data);
+            });
+            // If any car goes offline then this event will get triggered and we'll remove the marker of that car...  
+            cars_Ref.on('child_removed', function (data) {
+                markers[data.key].setMap(null);
+                cars_count--;
+                document.getElementById("cars").innerHTML = cars_count;
+            });
+        </script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWR5HzlxmdF0222bZzySFSyM9vLKTjK9I&callback=initMap">
+        </script>
+    </div>
+    </div>
+
+    <div class="d-flex align-items-center p-3 my-3 text-white-50 bg-purple rounded shadow-sm">
+    
+    <div class="lh-100">
+      <h6 class="mb-0 text-white lh-100">Vehicle Tracking</h6>
+      <small>Active count: </small><span id="cars">0</span>
+    </div>
+  </div>
+  <div class="my-3 p-3 bg-white rounded shadow-sm">
+    <table class="table">
+        <thead>
+            <tr>
+            <th>Vehicle ID</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Speed</th>
+            </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>GA-06-A2313</td>
+            <td id="lat"></td>
+            <td id="long"></td>
+            <td id="speed"></td>
+        </tr>
+        </tbody>
+    </table>    
+  </div>
+</main>
+      <script src="js/bootstrap.min.js"></script>
+      <script src="js/bootstrap.bundle.min.js"></script>
+      <script src="js/offcanvas.js"></script>
+    </body>
+</html>
