@@ -83,7 +83,7 @@
                   appId: "1:720475383058:web:6d3673ab698a9f8c"
               };
               firebase.initializeApp(config);
-            
+
             // Google Map Initialization... 
             function initMap() {
                 map = new google.maps.Map(document.getElementById('map'), {
@@ -110,7 +110,7 @@
                     strokeWeight: 1,
                     anchor: new google.maps.Point(0, 5),
                 };
-                var uluru = { lat: data.val().lat, lng: data.val().lng, speed: data.val().speed };
+                var uluru = { lat: data.val().lat, lng: data.val().lng, speed: data.val().speed, vid: data.val().vid };
                 var marker = new google.maps.Marker({
                     position: uluru,
                     icon: icon,
@@ -121,6 +121,7 @@
                 document.getElementById("lat").innerHTML=uluru.lat;
                 document.getElementById("long").innerHTML=uluru.lng;
                 document.getElementById("speed").innerHTML=uluru.speed;
+                document.getElementById("vid").innerHTML=uluru.vid;
                 
                 //speed limit
                 var lat = +uluru.lat.toFixed(6); 
@@ -130,21 +131,37 @@
 
                 if(lat>=15.422370&&lat<=15.425935&&lng>=73.979406&&lng<=73.979551&&speed>max)
                 {   //sending mail with ajax call to cloud function
-                    var dest=window.prompt("Speed limit exceeded. Enter user email ID to send challan");
-                    var http = new XMLHttpRequest();
-                    var url = 'https://us-central1-blackbox-243206.cloudfunctions.net/sendChallan?dest='+dest;
-                    console.log(url);
-                    http.open("GET",url);
-                    http.send();
-                    http.onreadystatechange=function(){
-                        if(this.readyState==4&& this.status==200)
-                            {
-                                window.alert(http.responseText);
-                            }
-                    }
-                }
+                    var db = firebase.firestore();
+                    var user_ref = db.collection("user").doc("001");
+                    user_ref.get().then(function(doc){
+                        if((doc.exists)){
+                            var user = doc.data();
+                            var ufname = user.ufname;
+                            var ulname = user.ulname;
+                            var uemail = user.uemail;
+                            var uvid = user.uvid;
+                            
+                            var http = new XMLHttpRequest();
+                            var url = 'https://us-central1-blackbox-243206.cloudfunctions.net/sendChallan?ufname='+ufname+'&ulname='+ulname+'&uemail='+uemail+'&uvid='+uvid+'&speed='+speed+'&location=GEC';
+                            console.log(url);
+                            http.open("GET",url);
+                            http.send();
+                            http.onreadystatechange=function(){
+                                if(this.readyState==4&& this.status==200)
+                                    {
+                                        document.getElementById("status").innerHTML=http.responseText;
+                                    } 
+                            } 
+                        }else{
+                            console.log("User not found");
+                        } 
+                    }).catch(function(error){
+                        console.log("Error getting document: ",error);
+                });
+                //change car color for speeding
+                marker.icon.fillColor = '#f44242';
             }
-                
+            }
             //events
             // get firebase database reference...
             var cars_Ref = firebase.database().ref('/');
@@ -185,14 +202,16 @@
             <th>Latitude</th>
             <th>Longitude</th>
             <th>Speed</th>
+            <th>Status</th>
             </tr>
         </thead>
         <tbody>
         <tr>
-            <td>GA-06-A2313</td>
+            <td id="vid"></td>
             <td id="lat"></td>
             <td id="long"></td>
             <td id="speed"></td>
+            <td id="status">Normal</td>
         </tr>
         </tbody>
     </table>    
