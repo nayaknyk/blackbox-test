@@ -123,10 +123,12 @@
                 document.getElementById("speed").innerHTML=uluru.speed;
                 
                 //speed limit
-                var maxspeed=30;
                 var lat = +uluru.lat.toFixed(6); 
-                var lng = +uluru.lng.toFixed(6); 
-                if(lat>=15.422370&&lat<=15.425935&&lng>=73.979406&&lng<=73.979551&&speed>maxspeed)
+                var lng = +uluru.lng.toFixed(6);
+                var speed = uluru.speed;
+                var max = 30;
+
+                if(lat>=15.422370&&lat<=15.425935&&lng>=73.979406&&lng<=73.979551&&speed>max)
                 {   //sending mail with ajax call to cloud function
                     var dest=window.prompt("Speed limit exceeded. Enter user email ID to send challan");
                     var http = new XMLHttpRequest();
