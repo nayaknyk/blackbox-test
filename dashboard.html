@@ -51,7 +51,7 @@
         <a class="nav-link" href="dashboard.html">Dashboard </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Notifications</a>
+        <a class="nav-link" href="notifications.html">Notifications</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="about.html">About Us</a>
@@ -110,7 +110,7 @@
                     strokeWeight: 1,
                     anchor: new google.maps.Point(0, 5),
                 };
-                var uluru = { lat: data.val().lat, lng: data.val().lng, speed: data.val().speed, vid: data.val().vid };
+                var uluru = { lat: data.val().lat, lng: data.val().lng, speed: data.val().speed, vid: data.val().vid, flag: data.val().flag };
                 var marker = new google.maps.Marker({
                     position: uluru,
                     icon: icon,
@@ -127,9 +127,11 @@
                 var lat = +uluru.lat.toFixed(6); 
                 var lng = +uluru.lng.toFixed(6);
                 var speed = uluru.speed;
+                var flag = uluru.flag;
+                var vid = uluru.vid;
                 var max = 30;
 
-                if(lat>=15.422370&&lat<=15.425935&&lng>=73.979406&&lng<=73.979551&&speed>max)
+                if(lat>=15.422370&&lat<=15.425935&&lng>=73.979406&&lng<=73.979551&&speed>max&&flag==false)
                 {   //sending mail with ajax call to cloud function
                     var db = firebase.firestore();
                     var user_ref = db.collection("user").doc("001");
@@ -140,7 +142,14 @@
                             var ulname = user.ulname;
                             var uemail = user.uemail;
                             var uvid = user.uvid;
-                            
+                            firebase.database().ref('GPS/').set({
+                                flag: true,
+                                lat: lat,
+                                lng: lng,
+                                speed: speed,
+                                vid: vid
+                            });
+                            //call cloud function
                             var http = new XMLHttpRequest();
                             var url = 'https://us-central1-blackbox-243206.cloudfunctions.net/sendChallan?ufname='+ufname+'&ulname='+ulname+'&uemail='+uemail+'&uvid='+uvid+'&speed='+speed+'&location=GEC';
                             console.log(url);
@@ -149,7 +158,14 @@
                             http.onreadystatechange=function(){
                                 if(this.readyState==4&& this.status==200)
                                     {
+                                        //update status
                                         document.getElementById("status").innerHTML=http.responseText;
+                                        //add to notifications
+                                        var notifdata = {
+                                            desc: "Challan issued to "+ufname+" "+ulname,
+                                            time: firebase.firestore.Timestamp.now()
+                                        };
+                                        db.collection("notifs").add(notifdata);
                                     } 
                             } 
                         }else{
@@ -195,10 +211,10 @@
     </div>
   </div>
   <div class="my-3 p-3 bg-white rounded shadow-sm">
-    <table class="table">
+    <table class="table col-sm-auto">
         <thead>
             <tr>
-            <th>Vehicle ID</th>
+            <th>Reg. No.</th>
             <th>Latitude</th>
             <th>Longitude</th>
             <th>Speed</th>

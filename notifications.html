@@ -62,25 +62,62 @@
     </ul>
   </div>
 </nav>
+<script src="https://www.gstatic.com/firebasejs/5.10.0/firebase.js"></script>
+<script src="js/jquery-3.4.0.min.js"></script>
+<script>
+var config = {
+    apiKey: "AIzaSyA8321tBph_3LMdTCAKQWppaJSnNxnI5HQ",
+    authDomain: "blackbox-243206.firebaseapp.com",
+    databaseURL: "https://blackbox-243206.firebaseio.com",
+    projectId: "blackbox-243206",
+    storageBucket: "blackbox-243206.appspot.com",
+    messagingSenderId: "720475383058",
+    appId: "1:720475383058:web:6d3673ab698a9f8c"
+    };
+    firebase.initializeApp(config);
+    var db = firebase.firestore();
+    db.collection("notifs").get().then(function(querySnapshot) {
+    querySnapshot.forEach(function(doc) {
+        //read each element
+        var notif = doc.data();
+        var desc = notif.desc;
+        var time = notif.time.toDate();
+        var text = desc+" at time: "+time;
+        //add divs dynamically for each notification
+        var node = document.createElement("DIV");
+        var attr = document.createAttribute("class");
+        attr.value = "my-3 p-3 bg-white rounded shadow-sm";
+        node.setAttributeNode(attr);
+        var textnode = document.createTextNode(text);
+        node.appendChild(textnode);
+        document.getElementById("main").appendChild(node);
+    });
+});   
+</script>
 
-
-<main role="main" class="container">
-    <div class="my-3 p-3 bg-white rounded shadow-sm">
-        developer 1
-    </div>
-    <div class="my-3 p-3 bg-white rounded shadow-sm">
-        developer 2
-    </div>
-    <div class="my-3 p-3 bg-white rounded shadow-sm">
-        developer 3
-    </div>
-    <div class="my-3 p-3 bg-white rounded shadow-sm">
-        developer 4
-    </div>
+<main role="main" class="container" id="main">
+    <button class="btn btn-primary btn-block" style="margin-top: 20px" onclick="return delnotifs()">Clear Notifications</button>
 </main>
+
 <script src="js/jquery-3.4.0.min.js"></script>
       <script src="js/bootstrap.min.js"></script>
       <script src="js/bootstrap.bundle.min.js"></script>
       <script src="js/offcanvas.js"></script>
+      <script>
+function delnotifs(){
+    db.collection("notifs").get().then(function(querySnapshot) {
+    querySnapshot.forEach(function(doc) {
+            var notif_id = doc.id;
+            db.collection("notifs").doc(notif_id).delete().then(function(){
+                console.log("document deleted");
+                location.reload();
+            }).catch(function(error){
+                console.error(error);
+            });
+        });
+    });
+    return false;
+}
+</script>
     </body>
 </html>
